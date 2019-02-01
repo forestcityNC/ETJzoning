@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<!-- mobile friendly -->
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+		<title>Forest City ETJ</title>
+		<!-- External Stylesheets -->
+		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css" />
+		<link rel="stylesheet" href="src/MarkerCluster.css" />
+		<link rel="stylesheet" href="src/MarkerCluster.Default.css" />
+		<link rel="stylesheet" href="src/L.Control.HtmlLegend.css" />
+		<link rel="stylesheet" href="src/leaflet-search.css">
+		<!-- js libraries-->
+		<script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"></script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+		<script src="src/L.Control.HtmlLegend.js"></script>
+		<script src="src/leaflet-search.js"></script>
+		<script src ="src/leaflet.markercluster.js"> </script>
+
+
+	<!-- mobile friendly styling -->
+	<style>
+		html, body {
+			height: 100%;
+			margin: 0;
+		}
+		#map {
+			width: 1000px;
+			height: 1000px;
+		}
+
+		.legend {
+			line-height: 18px;
+			color: #333333;
+			padding: 5px 7px;
+			background: white;
+			background: rgba(255,255,255,0.8);
+			box-shadow: 0 0 15px rgba(0,0,0,0.2);
+			border-radius: 5px;
+		}
+
+	</style>
+
+	</head>
+<body>
+
+  <!-- Map ID -->
+	<div id="map"></div>
+
+	<script>
+		// Create map
+		var map = L.map('map',{
+			center: [35.332083, -81.864000],
+			zoom: 13
+		});
+
+		// create tile layer
+		var carto = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+			attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+			subdomains: 'abcd',
+			maxZoom: 19
+		}).addTo(map);
+
+		// feature layer styling
+		function zoneStyle(feature) {
+			switch(String(feature.properties['Zoning'])) {
+				case 'R-15 ETJ':
+					return {
+						stroke: false,
+						fill: true,
+						fillColor: 'rgba(141,211,199,0.5)',
+						fillOpacity: 1,
+			}
+					break;
+				case 'C-3 ETJ':
+					return {
+						stroke: false,
+						fill: true,
+						fillColor: 'rgba(251,128,114,0.5)',
+						fillOpacity: 1,
+			}
+					break;
+				case 'M-1 ETJ':
+					return {
+						stroke: false,
+						fill: true,
+						fillColor: 'rgba(217,217,217,0.5)',
+						fillOpacity: 1,
+			}
+					break;
+				case 'R-20 ETJ':
+					return {
+						stroke: false,
+						fill: true,
+						fillColor: 'rgba(204,235,197,0.5)',
+						fillOpacity: 1,
+			}
+					break;
+				case 'R-6 ETJ':
+					return {
+						stroke: false,
+						fill: true,
+						fillColor: 'rgba(255,255,179,0.5)',
+						fillOpacity: 1,
+			}
+					break;
+				case 'R-8 ETJ':
+					return {
+						stroke: false,
+						fill: true,
+						fillColor: 'rgba(255,237,111,0.5)',
+						fillOpacity: 1,
+      }
+					break;
+				case 'Town Limits':
+					return {
+						stroke: false,
+						fill: true,
+						fillColor: 'rgba(128,177,211,0.5)',
+						fillOpacity: 1,
+			}
+					break;
+			}
+	  }
+
+		// declare layer variables
+		var featureLayer = null;
+
+		// add legend
+    var legend = L.control.htmllegend({
+        position: 'bottomright',
+        legends: [{
+            name: 'Forest City ETJ Zoning Districts',
+            layer: featureLayer,
+            elements: [{
+	                label: 'Town Limits',
+	                html: '',
+	                style: {
+	                    'background-color': '#80b1d3',
+	                    'width': '20px',
+	                    'height': '20px'
+	                }
+							}, {
+                label: 'C-3 General Business',
+                html: '',
+                style: {
+                    'background-color': '#fb8072',
+                    'width': '20px',
+                    'height': '20px'
+                }
+            }, {
+                label: 'M-1 Industrial',
+                html: '',
+                style: {
+                    'background-color': '#d9d9d9',
+                    'width': '20px',
+                    'height': '20px'
+                }
+            }, {
+                label: 'R-20 Low Density Residential/Agricultural',
+                html: '',
+                style: {
+                    'background-color': '#ccebc5',
+                    'width': '20px',
+                    'height': '20px'
+                }
+            }, {
+                label: 'R-15 Low Density Residential',
+                html: '',
+                style: {
+                    'background-color': '#8dd3c7',
+                    'width': '20px',
+                    'height': '20px'
+                }
+						}, {
+                label: 'R-8 Medium Density Residential',
+                html: '',
+                style: {
+                    'background-color': '#ffed6f',
+                    'width': '20px',
+                    'height': '20px'
+                }
+						}]
+        }],
+        collapseSimple: true,
+        detectStretched: true,
+        collapsedOnInit: false,
+        defaultOpacity: 0.7,
+        visibleIcon: 'icon icon-eye', // need to EDIT THESE
+        hiddenIcon: 'icon icon-eye-slash'
+    })
+    map.addControl(legend)
+
+		// load etj zoning files
+		$.getJSON("data/zoning.geojson", function(data){
+				featureLayer = L.geoJson(data, {
+					style: zoneStyle,
+		}).addTo(map);
+		// end getJSON
+		});
+
+		// load address points for address search
+		$.getJSON("data/address_pts.geojson", function(data){
+				var addressIcon = L.icon({
+					iconUrl: "images/home.svg",
+					iconSize: [60,50]
+				});
+				var addresses = L.geoJson(data,{
+						pointToLayer: function(feature,latlng){
+							var marker = L.marker(latlng,{icon:addressIcon});
+							marker.bindPopup(feature.properties.FULL_ADDRE);
+							return marker;
+						}
+				});
+				var clusters = L.markerClusterGroup();
+				clusters.addLayer(addresses);
+				map.addLayer(clusters);
+		// add search
+		map.addControl(new L.Control.Search({
+				layer: addresses,
+				textPlaceholder: 'Address...',
+				propertyName: 'FULL_ADDRE'
+			})
+		);
+		// end getJSON
+		});
+
+
+
+
+	</script>
+
+</body>
+</html>
