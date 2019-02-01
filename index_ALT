@@ -17,6 +17,7 @@
 		<script src="src/L.Control.HtmlLegend.js"></script>
 		<script src="src/leaflet-search.js"></script>
 		<script src ="src/leaflet.markercluster.js"> </script>
+		<script src ="src/leaflet.ajax.js"> </script>
 
 
 	<!-- mobile friendly styling -->
@@ -200,31 +201,31 @@
 		// end getJSON
 		});
 
-		// load address points for address search
-		$.getJSON("data/address_pts.geojson", function(data){
-				var addressIcon = L.icon({
-					iconUrl: "images/home.svg",
-					iconSize: [60,50]
-				});
-				var addresses = L.geoJson(data,{
-						pointToLayer: function(feature,latlng){
-							var marker = L.marker(latlng,{icon:addressIcon});
-							marker.bindPopup(feature.properties.FULL_ADDRE);
-							return marker;
-						}
-				});
-				var clusters = L.markerClusterGroup();
-				clusters.addLayer(addresses);
-				map.addLayer(clusters);
-		// add search
-		map.addControl(new L.Control.Search({
-				layer: clusters,
-				textPlaceholder: 'Address...',
-				propertyName: 'FULL_ADDRE'
-			})
-		);
-		// end getJSON
-		});
+		var addresses = new L.GeoJSON.AJAX('data/address_pts.geoJson', {
+	      pointToLayer: function(feature, latlng) {
+	        return new L.CircleMarker(latlng, {radius: 6, fillOpactiy: 0.9});
+	        },
+	    });
+	    var addressCluster = new L.markerClusterGroup({
+	      disableClusteringAtZoom: 12
+	    }).addTo(map);
+	    address.on('data:loaded', function() {
+	      addressCluster.addLayer(addresses);
+	    });
+
+	    // feature search
+	    var search = new L.Control.Search({
+	      layer: addresses,
+	      initial: false,
+	      propertyName: 'FULL_ADDRE',
+	      circleLocation:false,
+	      collapsed:false,
+	      textPlaceholder:'Search Addresses',
+	      zoom:'12'});
+
+	    map.addControl(search);
+
+
 
 
 
