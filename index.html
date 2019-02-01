@@ -52,6 +52,9 @@ html, body, #map {
 			maxZoom: 19
 		}).addTo(map);
 
+		// geolocate
+		map.locate({setView: true, maxZoom: 16});
+
 		// feature layer styling
 		function zoneStyle(feature) {
 			switch(String(feature.properties['Zoning'])) {
@@ -194,7 +197,7 @@ html, body, #map {
 		$.getJSON("data/address_pts.geojson", function(data){
 				var addressIcon = L.icon({
 					iconUrl: "images/home.svg",
-					iconSize: [60,50]
+					iconSize: [30,25]
 				});
 				var addresses = L.geoJson(data,{
 						pointToLayer: function(feature,latlng){
