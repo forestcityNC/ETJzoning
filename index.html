@@ -10,13 +10,17 @@
 		<link rel="stylesheet" href="src/MarkerCluster.css" />
 		<link rel="stylesheet" href="src/MarkerCluster.Default.css" />
 		<link rel="stylesheet" href="src/L.Control.HtmlLegend.css" />
-		<link rel="stylesheet" href="src/leaflet-search.css">
+		<link rel="stylesheet" href="src/leaflet-search.css"/>
+		<link rel="stylesheet" href="css/modern-ui.css"/>
+		<link rel="stylesheet" href="css/easy-button.css"/>
 		<!-- js libraries-->
 		<script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"></script>
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 		<script src="src/L.Control.HtmlLegend.js"></script>
 		<script src="src/leaflet-search.js"></script>
-		<script src ="src/leaflet.markercluster.js"> </script>
+		<script src="src/leaflet.markercluster.js"></script>
+		<script src="src/leaflet.ajax.js"></script>
+		<script src="src/easy-button.js"></script>
 
 
 	<!-- mobile friendly styling -->
@@ -35,27 +39,98 @@ html, body, #map {
 	</head>
 <body>
 
-  <!-- Map ID -->
-	<div id="map"></div>
-
+  <!-- Map, sidebar, searchbar -->
+	<div id="map">
+		<div id="sidebar">
+			<h3>Address Search</h3>
+			<hr>
+			<div id="mapinfo"></div>
+		</div>
+		<div id="globalsearch" style="position:absolute;left:10px;top:51px;height:38px;width:450px;z-index:1;"></div>
+	</div>
 	<script>
 		// Create map
-		var map = L.map('map',{
+		var map = new L.map('map',{
 			center: [35.332083, -81.864000],
 			zoom: 13
 		});
 
-		// create tile layer
+		// carto base layer
 		var carto = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
 			attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
 			subdomains: 'abcd',
-			maxZoom: 19
+			maxZoom: 22
 		}).addTo(map);
 
-		// geolocate
-		map.locate({setView: true, maxZoom: 16});
+		//map scale
+		var scale = L.control.scale({metric: false, imperial: true}).addTo(map);
 
-		// feature layer styling
+		// add legend
+    var legend = L.control.htmllegend({
+        position: 'bottomright',
+        legends: [{
+            name: 'Forest City ETJ Zoning Districts',
+            layer: zoning,
+            elements: [{
+	                label: 'Town Limits',
+	                html: '',
+	                style: {
+	                    'background-color': '#80b1d3',
+	                    'width': '20px',
+	                    'height': '20px'
+	                }
+							}, {
+                label: 'C-3 General Business',
+                html: '',
+                style: {
+                    'background-color': '#fb8072',
+                    'width': '20px',
+                    'height': '20px'
+                }
+            }, {
+                label: 'M-1 Industrial',
+                html: '',
+                style: {
+                    'background-color': '#d9d9d9',
+                    'width': '20px',
+                    'height': '20px'
+                }
+            }, {
+                label: 'R-20 Low Density Residential/Agricultural',
+                html: '',
+                style: {
+                    'background-color': '#ccebc5',
+                    'width': '20px',
+                    'height': '20px'
+                }
+            }, {
+                label: 'R-15 Low Density Residential',
+                html: '',
+                style: {
+                    'background-color': '#8dd3c7',
+                    'width': '20px',
+                    'height': '20px'
+                }
+						}, {
+                label: 'R-8 Medium Density Residential',
+                html: '',
+                style: {
+                    'background-color': '#ffed6f',
+                    'width': '20px',
+                    'height': '20px'
+                }
+						}]
+        }],
+        collapseSimple: true,
+        detectStretched: true,
+        collapsedOnInit: false,
+        defaultOpacity: 0.7,
+        visibleIcon: 'icon icon-eye', // need to EDIT THESE
+        hiddenIcon: 'icon icon-eye-slash'
+    })
+    map.addControl(legend)
+
+		// styles
 		function zoneStyle(feature) {
 			switch(String(feature.properties['Zoning'])) {
 				case 'R-15 ETJ':
@@ -117,108 +192,46 @@ html, body, #map {
 			}
 	  }
 
-		// declare layer variables
-		var featureLayer = null;
+		var addressIcon = L.icon({
+			iconUrl: "images/home.svg",
+			iconSize: [30,30]
+		});
 
-		// add legend
-    var legend = L.control.htmllegend({
-        position: 'bottomright',
-        legends: [{
-            name: 'Forest City ETJ Zoning Districts',
-            layer: featureLayer,
-            elements: [{
-	                label: 'Town Limits',
-	                html: '',
-	                style: {
-	                    'background-color': '#80b1d3',
-	                    'width': '20px',
-	                    'height': '20px'
-	                }
-							}, {
-                label: 'C-3 General Business',
-                html: '',
-                style: {
-                    'background-color': '#fb8072',
-                    'width': '20px',
-                    'height': '20px'
-                }
-            }, {
-                label: 'M-1 Industrial',
-                html: '',
-                style: {
-                    'background-color': '#d9d9d9',
-                    'width': '20px',
-                    'height': '20px'
-                }
-            }, {
-                label: 'R-20 Low Density Residential/Agricultural',
-                html: '',
-                style: {
-                    'background-color': '#ccebc5',
-                    'width': '20px',
-                    'height': '20px'
-                }
-            }, {
-                label: 'R-15 Low Density Residential',
-                html: '',
-                style: {
-                    'background-color': '#8dd3c7',
-                    'width': '20px',
-                    'height': '20px'
-                }
-						}, {
-                label: 'R-8 Medium Density Residential',
-                html: '',
-                style: {
-                    'background-color': '#ffed6f',
-                    'width': '20px',
-                    'height': '20px'
-                }
-						}]
-        }],
-        collapseSimple: true,
-        detectStretched: true,
-        collapsedOnInit: false,
-        defaultOpacity: 0.7,
-        visibleIcon: 'icon icon-eye', // need to EDIT THESE
-        hiddenIcon: 'icon icon-eye-slash'
-    })
-    map.addControl(legend)
+		// data
+		var zoning = new L.GeoJSON.AJAX("data/zoning.geojson", {
+			style: zoneStyle
+		})
+		map.addLayer(zoning);
 
-		// load etj zoning files
-		$.getJSON("data/zoning.geojson", function(data){
-				featureLayer = L.geoJson(data, {
-					style: zoneStyle,
+		var addresses = new L.GeoJSON.AJAX("data/address_pts.geojson", {
+			pointToLayer: function(feature, latlng) {
+				var marker = L.marker(latlng,{icon: addressIcon});
+				marker.bindPopup(feature.properties.FULL_ADDRE);
+				return marker;
+			},
+		});
+
+		var addressCluster = new L.markerClusterGroup({
+			disableClusteringAtZoom: 19
 		}).addTo(map);
-		// end getJSON
+		// add addresses to markerClusterGroup
+		addresses.on('data:loaded', function() {
+			addressCluster.addLayer(addresses);
 		});
 
-		// load address points for address search
-		$.getJSON("data/address_pts.geojson", function(data){
-				var addressIcon = L.icon({
-					iconUrl: "images/home.svg",
-					iconSize: [30,25]
-				});
-				var addresses = L.geoJson(data,{
-						pointToLayer: function(feature,latlng){
-							var marker = L.marker(latlng,{icon:addressIcon});
-							marker.bindPopup(feature.properties.FULL_ADDRE);
-							return marker;
-						}
-				});
-				var clusters = L.markerClusterGroup();
-				clusters.addLayer(addresses);
-				map.addLayer(clusters);
-		// add search
-		map.addControl(new L.Control.Search({
-				layer: clusters,
-				textPlaceholder: 'Address...',
-				propertyName: 'FULL_ADDRE',
-				zoom: '19'
-			})
-		);
-		// end getJSON
+		// address search
+
+
+		var search = new L.Control.Search({
+			layer: addressCluster,
+			propertyName: 'FULL_ADDRE',
+			textPlaceholder: 'Search an address...',
+			zoom: '19'
 		});
+		map.addControl(search);
+
+
+
 
 
 
